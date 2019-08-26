@@ -1,31 +1,36 @@
-  // put your setup code here, to run once:
-  const int trigPin = 2;
-  const int echoPin = 0;
-  long duration;
-  int distance;
-void setup() {
-pinMode(trigPin, OUTPUT); // Sets the trigPin as an Output
-pinMode(echoPin, INPUT); // Sets the echoPin as an Input
-Serial.begin(9600); // Starts the serial communication
+#include "DHTesp.h"
+
+#define DHTpin 14    //D5 of NodeMCU is GPIO14
+
+DHTesp dht;
+
+void setup()
+{
+  Serial.begin(9600);
+  Serial.println();
+  Serial.println("Status\tHumidity (%)\tTemperature (C)\t(F)\tHeatIndex (C)\t(F)");
+
+  dht.setup(DHTpin, DHTesp::DHT11); //for DHT11 Connect DHT sensor to GPIO 17
+  //dht.setup(DHTpin, DHTesp::DHT22); //for DHT22 Connect DHT sensor to GPIO 17
 }
 
-void loop() {
-  // Clears the trigPin
-  digitalWrite(trigPin, LOW);
-  delayMicroseconds(2);
+void loop()
+{
+  delay(dht.getMinimumSamplingPeriod());
 
-  // Sets the trigPin on HIGH state for 10 micro seconds
-  digitalWrite(trigPin, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(trigPin, LOW);
+  float humidity = dht.getHumidity();
+  float temperature = dht.getTemperature();
 
-  // Reads the echoPin, returns the sound wave travel time in microseconds
-  duration = pulseIn(echoPin, HIGH);
-
-  // Calculating the distance
-  distance= duration*0.034/2;
-  // Prints the distance on the Serial Monitor
-  Serial.print("Distance: ");
-  Serial.println(distance);
-  delay(2000);
+  Serial.print(dht.getStatusString());
+  Serial.print("\t");
+  Serial.print(humidity, 1);
+  Serial.print("\t\t");
+  Serial.print(temperature, 1);
+  Serial.print("\t\t");
+  Serial.print(dht.toFahrenheit(temperature), 1);
+  Serial.print("\t\t");
+  Serial.print(dht.computeHeatIndex(temperature, humidity, false), 1);
+  Serial.print("\t\t");
+  Serial.println(dht.computeHeatIndex(dht.toFahrenheit(temperature), humidity, true), 1);
+  delay(1000);
 }
