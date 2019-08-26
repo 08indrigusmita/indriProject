@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Aug 26, 2019 at 11:55 AM
+-- Generation Time: Aug 26, 2019 at 12:33 PM
 -- Server version: 10.1.38-MariaDB
 -- PHP Version: 7.3.4
 
@@ -21,6 +21,19 @@ SET time_zone = "+00:00";
 --
 -- Database: `dbs_smart_trash`
 --
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tbl_api_status`
+--
+
+CREATE TABLE `tbl_api_status` (
+  `id` int(5) NOT NULL,
+  `sensor` varchar(100) NOT NULL,
+  `nilai` int(5) NOT NULL,
+  `status` varchar(1) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
 
@@ -77,6 +90,12 @@ INSERT INTO `tbl_user` (`id`, `username`, `password`, `last_login`, `type`) VALU
 --
 
 --
+-- Indexes for table `tbl_api_status`
+--
+ALTER TABLE `tbl_api_status`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `tbl_log_pengunaan`
 --
 ALTER TABLE `tbl_log_pengunaan`
@@ -97,6 +116,12 @@ ALTER TABLE `tbl_user`
 --
 -- AUTO_INCREMENT for dumped tables
 --
+
+--
+-- AUTO_INCREMENT for table `tbl_api_status`
+--
+ALTER TABLE `tbl_api_status`
+  MODIFY `id` int(5) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `tbl_log_pengunaan`
