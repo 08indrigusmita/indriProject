@@ -32,7 +32,7 @@
                   <img src="ladun/login/images/logo.png" alt="logo" style='width:100px; '>
                 </div>
                 <div style='text-align:center;'>
-                <h3><strong>Smart Trash Monitoring</strong></h3>
+                <h3><strong>Smart Trash Monitoring 2</strong></h3>
                 <h6 class="font-weight-light">Sign in to continue.</h6>
                 <div>
                 <div class="pt-3">
