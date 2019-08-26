@@ -1,0 +1,2 @@
+# indriProject
+Project Smart Trash 
