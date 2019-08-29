@@ -1,0 +1,33 @@
+ // Clears the trigPin
+digitalWrite(trigPin, LOW);
+delayMicroseconds(2);
+
+// Sets the trigPin on HIGH state for 10 micro seconds
+digitalWrite(trigPin, HIGH);
+delayMicroseconds(10);
+digitalWrite(trigPin, LOW);
+
+// Reads the echoPin, returns the sound wave travel time in microseconds
+duration = pulseIn(echoPin, HIGH);
+
+// Calculating the distance
+distance= duration*0.034/2;
+// Prints the distance on the Serial Monitor
+
+digitalWrite(ENA, HIGH); // set speed to 200 out of possible range 0~255
+digitalWrite(IN1, HIGH);
+digitalWrite(IN2, LOW);
+Serial.println("Mutar");
+delay(800); // now change motor directions
+Serial.println("Balik");
+digitalWrite(IN1, LOW);
+digitalWrite(IN2, HIGH);
+
+delay(800); // now turn off motors
+
+digitalWrite(IN1, LOW);
+digitalWrite(IN2, LOW);
+
+Serial.print("Distance: ");
+Serial.println(distance);
+delay(1500);
