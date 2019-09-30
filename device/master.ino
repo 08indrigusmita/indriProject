@@ -1,3 +1,5 @@
+#include <DFPlayer_Mini_Mp3.h>
+#include <SoftwareSerial.h>
 #include <Servo.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
@@ -22,14 +24,18 @@ int jarakUltra2;
 int volume;
 long angkaAcak;
 //inisialisasi konfigurasi wifi
-const char *ssid =  "(-_-)SilenT_Timer";     //Nama SSID Wifi
-const char *pass =  "naruto222";             //Password Wifi
+const char *ssid =  "IndriSpot";     //Nama SSID Wifi
+const char *pass =  "jaringan123";             //Password Wifi
 WiFiClient client;
 //http client
 const char *host = "http://indriproject.haxors.or.id/mainApp/sendData.php";
 void setup() {
   //pertama kali dijalankan ketika program berjalan
-  Serial.begin(9600);
+Serial.begin (9600);
+//mySerial.begin(9600);
+
+  // Delay is required before accessing player. From my experience it's ~1 sec
+//  delay(1000); 
   pinMode(sensorPir, INPUT);
   pinMode(trigPinUltra1, OUTPUT);
   pinMode(echoPinUltra1, INPUT);
@@ -37,13 +43,13 @@ void setup() {
   pinMode(echoPinUltra2, INPUT);
   servo.attach(D0);
   servo.write(0);
-  //Memulai inisialisasi program
+//  //Memulai inisialisasi program
   Serial.println("Inisialisasi .... ");
   Serial.println("Selamat datang di Smart Trash. By Indri Gusmita");
   Serial.println(" ============================ ");
   Serial.println("Melakukan koneksi ke wifi : ");
   Serial.println(ssid); 
- 
+
   WiFi.begin(ssid, pass); 
   while (WiFi.status() != WL_CONNECTED) 
      {
@@ -61,15 +67,21 @@ void cekGerakan()
 {
   delay(1000);
   long state = digitalRead(sensorPir);
-  
-    if(state == HIGH) {
-      gerakTutup();
-      delay(1500);
-      ultraDepan();
-    }else{
-      delay(500);
+  delay(400);
+    if(state == LOW) {
+      Serial.println("Tidak ada gerak");
       cekGerakan();
+    }else{
+      Serial.println("Ada gerakan");
+    Serial.println("Tutup di tutup ..");
+    gerakTutup();
+    delay(1500);
+    ultraDepan();
     }
+    
+//    gerakTutup();
+//      delay(1500);
+//      ultraDepan();
 }
 
 void ultraDepan()
@@ -92,11 +104,12 @@ if(jarakUltra1 > 50)
 {
 //  gerakTutup();
 }else{
+  Serial.println("Tutup terbuka ...");
   gerakBuka();
   delay(1000);
  cekGerakan();
 }
-Serial.print("Distance: ");
+Serial.print("Halangan : ");
 Serial.println(jarakUltra1);
 delay(1000);
 }
@@ -134,25 +147,29 @@ delay(1000);
 
 void loop() {
 //cekVolume();
-//ultraDepan();
+ultraDepan();
 //cekGerakan();
-HTTPClient http;
-String volumeData, station, postData;
+//HTTPClient http;
+//String volumeData, station, postData;
+//
+//angkaAcak = random(20, 100);
+//volumeData = String(angkaAcak);
+//
+//postData = "volume=" + volumeData;
+//http.begin("http://indriproject.haxors.or.id/mainApp/sendData.php");              //Specify request destination
+//  http.addHeader("Content-Type", "application/x-www-form-urlencoded");    //Specify content-type header
+// 
+//  int httpCode = http.POST(postData);   //Send the request
+//  String payload = http.getString();    //Get the response payload
+// 
+//  Serial.println(httpCode);   //Print HTTP return code
+//  Serial.println(payload);    //Print request response payload
+// 
+//  http.end();  //Close connection
+//  
+//  delay(5000);  //Post Data at every 5 seconds
 
-angkaAcak = random(20, 100);
-volumeData = String(angkaAcak);
-
-postData = "volume=" + volumeData;
-http.begin("http://indriproject.haxors.or.id/mainApp/sendData.php");              //Specify request destination
-  http.addHeader("Content-Type", "application/x-www-form-urlencoded");    //Specify content-type header
- 
-  int httpCode = http.POST(postData);   //Send the request
-  String payload = http.getString();    //Get the response payload
- 
-  Serial.println(httpCode);   //Print HTTP return code
-  Serial.println(payload);    //Print request response payload
- 
-  http.end();  //Close connection
-  
-  delay(5000);  //Post Data at every 5 seconds
+//mp3_set_volume (25);
+//mp3_play(1);
+//delay(1550);
 }
