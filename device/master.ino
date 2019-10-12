@@ -24,18 +24,15 @@ int jarakUltra2;
 int volume;
 long angkaAcak;
 //inisialisasi konfigurasi wifi
-const char *ssid =  "IndriSpot";     //Nama SSID Wifi
-const char *pass =  "jaringan123";             //Password Wifi
+const char *ssid =  "NadhaMedia";     //Nama SSID Wifi
+const char *pass =  "rikacantik";             //Password Wifi
 WiFiClient client;
 //http client
 const char *host = "http://indriproject.haxors.or.id/mainApp/sendData.php";
 void setup() {
-  //pertama kali dijalankan ketika program berjalan
+//pertama kali dijalankan ketika program berjalan
 Serial.begin (9600);
-//mySerial.begin(9600);
-
-  // Delay is required before accessing player. From my experience it's ~1 sec
-//  delay(1000); 
+  delay(500); 
   pinMode(sensorPir, INPUT);
   pinMode(trigPinUltra1, OUTPUT);
   pinMode(echoPinUltra1, INPUT);
@@ -49,7 +46,7 @@ Serial.begin (9600);
   Serial.println(" ============================ ");
   Serial.println("Melakukan koneksi ke wifi : ");
   Serial.println(ssid); 
-
+//
   WiFi.begin(ssid, pass); 
   while (WiFi.status() != WL_CONNECTED) 
      {
@@ -58,14 +55,27 @@ Serial.begin (9600);
      }
   Serial.println("");
   Serial.println("Koneksi berhasil. Sistem memeriksa koneksi ke server.");
-  delay(2000);
+  //audio untuk pembuka 1
+  delay(500);
+  //fungsi mengambil status ke tabel koneksi
+   HTTPClient http;
+  String volumeData, station, postData;
+  postData = "status=on";
+  http.begin("https://indri-project.haxors.or.id/mainApp/cekKoneksi.php");              //Specify request destination
+  http.addHeader("Content-Type", "application/x-www-form-urlencoded");    //Specify content-type header
+  int httpCode = http.POST(postData);   //Send the request
+  String payload = http.getString();    //Get the response payload
+  Serial.println(httpCode);   //Print HTTP return code
+  Serial.println(payload);    //Print request response payload
+  http.end();  //Close connection
+  delay(5000);
   Serial.println("Pengecekan selesai. Tempat sampah siap digunakan. "); 
   delay(3000);
 }
 
 void cekGerakan()
 {
-  delay(1000);
+  delay(3000);
   long state = digitalRead(sensorPir);
   delay(400);
     if(state == LOW) {
@@ -86,8 +96,7 @@ void cekGerakan()
 
 void ultraDepan()
 {
-  //perintah yang akan di ulang
-  
+ 
 // Clears the trigPin
 digitalWrite(trigPinUltra1, LOW);
 delayMicroseconds(2);
@@ -129,45 +138,88 @@ void gerakBuka()
 void cekVolume()
 {
   digitalWrite(trigPinUltra2, LOW);
-delayMicroseconds(2);
-// Sets the trigPin on HIGH state for 10 micro seconds
-digitalWrite(trigPinUltra2, HIGH);
-delayMicroseconds(10);
-digitalWrite(trigPinUltra2, LOW);
-// Reads the echoPin, returns the sound wave travel time in microseconds
-durasiUltra2 = pulseIn(echoPinUltra2, HIGH);
-// Calculating the distance
-jarakUltra2 = (durasiUltra2 * 0.034 / 2) + 3;
-volume = jarakUltra2 - 30;
-
-Serial.println(volume);
-delay(1000);
+  delayMicroseconds(2);
+  // Sets the trigPin on HIGH state for 10 micro seconds
+  digitalWrite(trigPinUltra2, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPinUltra2, LOW);
+  // Reads the echoPin, returns the sound wave travel time in microseconds
+  durasiUltra2 = pulseIn(echoPinUltra2, HIGH);
+  // Nilai pusat
+  jarakUltra2 = (durasiUltra2  / 2) / 29.1;
+  int jarakFin = jarakUltra2 - 5 + 7;
+  //domain
+  int rangeVolume [] = {30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1};
   
+  volume = rangeVolume[jarakFin];
+  //fungsi keanggotaan
+    int kosongMin, kosongMax, sedikitMin, sedikitMax, setengahMin, setengahMax, hampirMin, hampirMax, penuhMin, penuhMax;
+  
+  kosongMin = 0;
+  kosongMax = 6;
+  sedikitMin = 6;
+  sedikitMax =  12;
+  setengahMin = 12;
+  setengahMax = 18;
+  hampirMin = 18;
+  hampirMax = 24;
+  penuhMin = 24;
+  penuhMax = 30;
+  
+  
+
+  //kirim status
+  const char* status = "";
+//  if(
+  if(volume >= kosongMin && volume <= kosongMax)
+  {
+    status = "Penuh";
+  }else if(volume >= sedikitMin && volume <= sedikitMax)
+  {
+    status = "Hampir penuh";
+  }else if(volume >= setengahMin && volume <= setengahMax)
+  {
+    status = "Setengah";
+  }else if(volume >= hampirMin && volume <= hampirMax)
+  {
+    status = "Sedikit";
+  }else if(volume >= penuhMin && volume <= penuhMax)
+  {
+    status = "Kosong";
+  }
+  
+  Serial.println(volume);
+//  Serial.print(" => ");
+//  Serial.println(status);
+  delay(1000);
+}
+
+void kirimData(){
+  HTTPClient http;
+String volumeData, station, postData;
+angkaAcak = random(20, 100);
+volumeData = String(angkaAcak);
+postData = "volume=" + volumeData;
+http.begin("http://indriproject.haxors.or.id/mainApp/sendData.php");              //Specify request destination
+  http.addHeader("Content-Type", "application/x-www-form-urlencoded");    //Specify content-type header
+  int httpCode = http.POST(postData);   //Send the request
+  String payload = http.getString();    //Get the response payload
+  Serial.println(httpCode);   //Print HTTP return code
+  Serial.println(payload);    //Print request response payload
+  http.end();  //Close connection
+  delay(5000);  //Post Data at every 5 seconds
 }
 
 void loop() {
-//cekVolume();
-ultraDepan();
+  
+cekVolume();
+//gerakBuka();
+//delay(3000);
+//gerakTutup();
+//delay(3000);
+//ultraDepan();
 //cekGerakan();
-//HTTPClient http;
-//String volumeData, station, postData;
-//
-//angkaAcak = random(20, 100);
-//volumeData = String(angkaAcak);
-//
-//postData = "volume=" + volumeData;
-//http.begin("http://indriproject.haxors.or.id/mainApp/sendData.php");              //Specify request destination
-//  http.addHeader("Content-Type", "application/x-www-form-urlencoded");    //Specify content-type header
-// 
-//  int httpCode = http.POST(postData);   //Send the request
-//  String payload = http.getString();    //Get the response payload
-// 
-//  Serial.println(httpCode);   //Print HTTP return code
-//  Serial.println(payload);    //Print request response payload
-// 
-//  http.end();  //Close connection
-//  
-//  delay(5000);  //Post Data at every 5 seconds
+
 
 //mp3_set_volume (25);
 //mp3_play(1);
