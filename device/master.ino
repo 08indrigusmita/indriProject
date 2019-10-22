@@ -3,6 +3,8 @@
 #include <Servo.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
 
 //inisialisasi pin sensor pir
 int sensorPir = D6;
@@ -72,22 +74,44 @@ Serial.begin (9600);
   Serial.println("Pengecekan selesai. Tempat sampah siap digunakan. "); 
   delay(3000);
 }
+  int bil = 0;
 
 void cekGerakan()
 {
-  delay(3000);
+
+  delay(100);
   long state = digitalRead(sensorPir);
-  delay(400);
-    if(state == LOW) {
-      Serial.println("Tidak ada gerak");
-      cekGerakan();
-    }else{
-      Serial.println("Ada gerakan");
-    Serial.println("Tutup di tutup ..");
-    gerakTutup();
-    delay(1500);
-    ultraDepan();
-    }
+  if(state == LOW){
+    Serial.println("No");
+  }else{
+    Serial.println("Ada");
+    delay(200);
+    cekGerakan();
+  }
+  
+//  delay(2000);
+//  long state = digitalRead(sensorPir);
+//  delay(400);
+//    if(state == LOW) {
+//      Serial.println("Tidak ada gerak");
+//      delay(500);
+//      bil++;
+//      if(bil >= 7){
+//        gerakTutup();
+//    delay(1000);
+//    ultraDepan();
+//      }else{
+//        bil = 0;
+//        delay(200);
+//        cekGerakan();
+//      }
+//    }else{
+//      Serial.println("Ada gerakan");
+//    Serial.println("Tutup di tutup ..");
+//    gerakTutup();
+//    delay(2500);
+//    ultraDepan();
+//    }
     
 //    gerakTutup();
 //      delay(1500);
@@ -109,6 +133,8 @@ durasiUltra1 = pulseIn(echoPinUltra1, HIGH);
 // Calculating the distance
 jarakUltra1 = durasiUltra1 * 0.034 / 2;
 // Prints the distance on the Serial Monitor
+int nilaiPusat = 100;
+
 if(jarakUltra1 > 50)
 {
 //  gerakTutup();
@@ -118,6 +144,7 @@ if(jarakUltra1 > 50)
   delay(1000);
  cekGerakan();
 }
+
 Serial.print("Halangan : ");
 Serial.println(jarakUltra1);
 delay(1000);
@@ -148,14 +175,54 @@ void cekVolume()
   // Nilai pusat
   jarakUltra2 = (durasiUltra2  / 2) / 29.1;
   int jarakFin = jarakUltra2 - 5 + 7;
-  //domain
+  //domain range
   int rangeVolume [] = {30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1};
+  //total dari keseluruhan range
+  int totRange = 465;
   
   volume = rangeVolume[jarakFin];
-  //fungsi keanggotaan
+  //fungsi mencari derajat keanggotaan
     int kosongMin, kosongMax, sedikitMin, sedikitMax, setengahMin, setengahMax, hampirMin, hampirMax, penuhMin, penuhMax;
-  
-  kosongMin = 0;
+    int kosMa, sedMa, setMa, hamMa,penMa;
+    kosMa = 0;
+    sedMa = 6;
+    setMa = 12;
+    hamMa = 18;
+    penMa = 24;
+  //fuzzifikasi
+   
+    //derajat keanggotaan 
+    //kosong
+    for(int kosMi = 0; kosMi <= totRange; kosMi++ ){
+     if(kosMi < kosMa && kosMa == kosMi + 6){
+       kosMa = kosMa + 6;
+     }
+    }
+    //sedikit
+    for(int sedMi = 0; sedMi <= totRange; sedMi++ ){
+     if(sedMi < sedMa && sedMa == sedMi + 6){
+       sedMa = sedMa + 6;
+     }
+    }
+    //setengah
+    for(int setMi = 0; setMi <= totRange; setMi++ ){
+     if(setMi < setMa && setMa == setMi + 6){
+       setMa = setMa + 6;
+     }
+    }
+    //hampir
+    for(int hamMi = 0; hamMi <= totRange; hamMi++ ){
+     if(hamMi < hamMa && hamMa == hamMi + 6){
+       hamMa = hamMa + 6;
+     }
+    }
+    //penuh
+    for(int penMi = 0; penMi <= totRange; penMi++ ){
+     if(penMi < penMa && penMa == penMi + 6){
+       penMa = penMa + 6;
+     }
+    }
+   kosongMin = 0;
   kosongMax = 6;
   sedikitMin = 6;
   sedikitMax =  12;
@@ -166,11 +233,10 @@ void cekVolume()
   penuhMin = 24;
   penuhMax = 30;
   
-  
-
-  //kirim status
+  //Rule fuzzy
   const char* status = "";
-//  if(
+
+
   if(volume >= kosongMin && volume <= kosongMax)
   {
     status = "Penuh";
@@ -188,7 +254,7 @@ void cekVolume()
     status = "Kosong";
   }
   
-  Serial.println(volume);
+  Serial.println(jarakFin);
 //  Serial.print(" => ");
 //  Serial.println(status);
   delay(1000);
@@ -212,12 +278,12 @@ http.begin("http://indriproject.haxors.or.id/mainApp/sendData.php");            
 
 void loop() {
   
-cekVolume();
+//cekVolume();
 //gerakBuka();
 //delay(3000);
 //gerakTutup();
 //delay(3000);
-//ultraDepan();
+ultraDepan();
 //cekGerakan();
 
 
