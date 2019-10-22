@@ -6,16 +6,15 @@
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 
-//inisialisasi pin sensor pir
-int sensorPir = D6;
-int pirState = LOW;
 int val = 0;
 //inisialiasai pin sensor ultrasonik 1
-const int trigPinUltra1 = D1; 
-const int echoPinUltra1 = D2; 
+const int trigPinUltra1 = 5; 
+const int echoPinUltra1 = 4;
+ 
 //inisialisasi pin sensor ultrasonik 2
-const int trigPinUltra2 = D4;
-const int echoPinUltra2 = D5;
+const int trigPinUltra2 = 2;
+const int echoPinUltra2 = 14;
+
 //inisialisasi servo
 Servo servo;
 //inisialisasi variabel lokal
@@ -25,9 +24,10 @@ long durasiUltra2;
 int jarakUltra2;
 int volume;
 long angkaAcak;
+
 //inisialisasi konfigurasi wifi
-const char *ssid =  "NadhaMedia";     //Nama SSID Wifi
-const char *pass =  "rikacantik";             //Password Wifi
+const char *ssid =  "indrispot";     //Nama SSID Wifi
+const char *pass =  "71154043";             //Password Wifi
 WiFiClient client;
 //http client
 const char *host = "http://indriproject.haxors.or.id/mainApp/sendData.php";
@@ -35,13 +35,13 @@ void setup() {
 //pertama kali dijalankan ketika program berjalan
 Serial.begin (9600);
   delay(500); 
-  pinMode(sensorPir, INPUT);
   pinMode(trigPinUltra1, OUTPUT);
   pinMode(echoPinUltra1, INPUT);
   pinMode(trigPinUltra2, OUTPUT);
   pinMode(echoPinUltra2, INPUT);
-  servo.attach(D0);
+  servo.attach(16);
   servo.write(0);
+  
 //  //Memulai inisialisasi program
   Serial.println("Inisialisasi .... ");
   Serial.println("Selamat datang di Smart Trash. By Indri Gusmita");
@@ -75,49 +75,6 @@ Serial.begin (9600);
   delay(3000);
 }
   int bil = 0;
-
-void cekGerakan()
-{
-
-  delay(100);
-  long state = digitalRead(sensorPir);
-  if(state == LOW){
-    Serial.println("No");
-  }else{
-    Serial.println("Ada");
-    delay(200);
-    cekGerakan();
-  }
-  
-//  delay(2000);
-//  long state = digitalRead(sensorPir);
-//  delay(400);
-//    if(state == LOW) {
-//      Serial.println("Tidak ada gerak");
-//      delay(500);
-//      bil++;
-//      if(bil >= 7){
-//        gerakTutup();
-//    delay(1000);
-//    ultraDepan();
-//      }else{
-//        bil = 0;
-//        delay(200);
-//        cekGerakan();
-//      }
-//    }else{
-//      Serial.println("Ada gerakan");
-//    Serial.println("Tutup di tutup ..");
-//    gerakTutup();
-//    delay(2500);
-//    ultraDepan();
-//    }
-    
-//    gerakTutup();
-//      delay(1500);
-//      ultraDepan();
-}
-
 void ultraDepan()
 {
  
@@ -141,8 +98,9 @@ if(jarakUltra1 > 50)
 }else{
   Serial.println("Tutup terbuka ...");
   gerakBuka();
-  delay(1000);
- cekGerakan();
+  delay(5000);
+  gerakTutup();
+  
 }
 
 Serial.print("Halangan : ");
@@ -236,24 +194,29 @@ void cekVolume()
   //Rule fuzzy
   const char* status = "";
 
-
+String statusTempatSampah = "";
   if(volume >= kosongMin && volume <= kosongMax)
   {
-    status = "Penuh";
+    status = "kosong";
   }else if(volume >= sedikitMin && volume <= sedikitMax)
   {
-    status = "Hampir penuh";
+    status = "sedikit";
   }else if(volume >= setengahMin && volume <= setengahMax)
   {
-    status = "Setengah";
+    status = "setengah";
   }else if(volume >= hampirMin && volume <= hampirMax)
   {
-    status = "Sedikit";
+    status = "hampir_penuh";
   }else if(volume >= penuhMin && volume <= penuhMax)
   {
-    status = "Kosong";
+    status = "penuh";
   }
-  
+  if (status=="penuh"){
+    statusTempatSampah = "penuh";
+  }
+  else {
+    statusTempatSampah = "tidak";
+  }
   Serial.println(jarakFin);
 //  Serial.print(" => ");
 //  Serial.println(status);
