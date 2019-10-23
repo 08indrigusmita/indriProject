@@ -8,8 +8,8 @@
 
 int val = 0;
 //inisialiasai pin sensor ultrasonik 1
-const int trigPinUltra1 = 5; 
-const int echoPinUltra1 = 4;
+const int trigPinUltra1 = 12; //D6 
+const int echoPinUltra1 = 13; //D7
  
 //inisialisasi pin sensor ultrasonik 2
 const int trigPinUltra2 = 2;
@@ -31,7 +31,12 @@ const char *pass =  "71154043";             //Password Wifi
 WiFiClient client;
 //http client
 const char *host = "http://indriproject.haxors.or.id/mainApp/sendData.php";
+//inisialisasi lcd 
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
 void setup() {
+  
+  lcd.begin();
 //pertama kali dijalankan ketika program berjalan
 Serial.begin (9600);
   delay(500); 
@@ -41,12 +46,15 @@ Serial.begin (9600);
   pinMode(echoPinUltra2, INPUT);
   servo.attach(16);
   servo.write(0);
-  
+//    mp3_set_volume (25);
 //  //Memulai inisialisasi program
-  Serial.println("Inisialisasi .... ");
+  Serial.println("Mulai");
+  printLcd("Mulai ...","");
   Serial.println("Selamat datang di Smart Trash. By Indri Gusmita");
   Serial.println(" ============================ ");
   Serial.println("Melakukan koneksi ke wifi : ");
+  delay(2000);
+   printLcd("Menghubungkan","ke wifi ...");
   Serial.println(ssid); 
 //
   WiFi.begin(ssid, pass); 
@@ -72,8 +80,45 @@ Serial.begin (9600);
   http.end();  //Close connection
   delay(5000);
   Serial.println("Pengecekan selesai. Tempat sampah siap digunakan. "); 
+   printLcd("Koneksi","berhasil :) ");
+  delay(1000);
+  printLcd("Cek koneksi", "ke server ..");
+  delay(1000);
+  cekStatusDevice();
   delay(3000);
 }
+
+void cekStatusDevice(){
+  HTTPClient http;
+  String postData;
+  postData = "status=on";
+  http.begin("http://indri-project.haxors.or.id/mainApp/cekKoneksi.php");
+  http.addHeader("Content-Type", "application/x-www-form-urlencoded");
+  int httpCode = http.POST(postData);   //Send the request
+  String respon = http.getString();    //Get the response payload
+  Serial.println(respon);
+  printLcd("Status device : ",respon);
+  if(respon == "manual" || respon == "silent"){
+    printLcd("Menunggu smart","mode");
+    delay(2000);
+    cekStatusDevice();
+  }else{
+    
+  }
+  delay(500);
+  http.end();  //Close connection
+}
+
+void printLcd(String teks, String teks2){
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print(teks);
+  lcd.setCursor(0,1);
+  lcd.print(teks2);
+  
+}
+
+
   int bil = 0;
 void ultraDepan()
 {
@@ -91,20 +136,25 @@ durasiUltra1 = pulseIn(echoPinUltra1, HIGH);
 jarakUltra1 = durasiUltra1 * 0.034 / 2;
 // Prints the distance on the Serial Monitor
 int nilaiPusat = 100;
+Serial.print("Halangan : ");
+Serial.println(jarakUltra1);
 
 if(jarakUltra1 > 50)
 {
 //  gerakTutup();
 }else{
   Serial.println("Tutup terbuka ...");
+  printLcd("Masukkan","sampah kamu ..");
   gerakBuka();
   delay(5000);
   gerakTutup();
-  
+   printLcd("Terima ","kasih..");
+   delay(1000);
+   lcd.clear();
+//  mp3_play(5);
+
 }
 
-Serial.print("Halangan : ");
-Serial.println(jarakUltra1);
 delay(1000);
 }
 
@@ -217,19 +267,36 @@ String statusTempatSampah = "";
   else {
     statusTempatSampah = "tidak";
   }
-  Serial.println(jarakFin);
+  
+  Serial.println(jarakUltra2);
+  sendVolume(jarakUltra2);
 //  Serial.print(" => ");
 //  Serial.println(status);
   delay(1000);
 }
 
+void sendVolume(int volum)
+{
+  HTTPClient http;
+  String postData;
+  String volCap = String(volum);
+  postData = "volume="+volCap;
+  http.begin("http://indri-project.haxors.or.id/mainApp/sendData.php");
+  http.addHeader("Content-Type", "application/x-www-form-urlencoded");
+  int httpCode = http.POST(postData);   //Send the request
+  String respon = http.getString();    //Get the response payload
+  Serial.println(respon);
+  
+  http.end();  //Close connection
+  delay(2000);
+}
 void kirimData(){
   HTTPClient http;
-String volumeData, station, postData;
-angkaAcak = random(20, 100);
-volumeData = String(angkaAcak);
-postData = "volume=" + volumeData;
-http.begin("http://indriproject.haxors.or.id/mainApp/sendData.php");              //Specify request destination
+  String volumeData, station, postData;
+  angkaAcak = random(20, 100);
+  volumeData = String(angkaAcak);
+  postData = "volume=" + volumeData;
+  http.begin("http://indriproject.haxors.or.id/mainApp/sendData.php");              //Specify request destination
   http.addHeader("Content-Type", "application/x-www-form-urlencoded");    //Specify content-type header
   int httpCode = http.POST(postData);   //Send the request
   String payload = http.getString();    //Get the response payload
