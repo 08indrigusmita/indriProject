@@ -1,5 +1,5 @@
-#include <DFPlayer_Mini_Mp3.h>
 #include <SoftwareSerial.h>
+#include <DFPlayer_Mini_Mp3.h>
 #include <Servo.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
@@ -34,11 +34,13 @@ const char *host = "http://indriproject.haxors.or.id/mainApp/sendData.php";
 //inisialisasi lcd 
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 
+SoftwareSerial mySerial(0, 15); // RX, TX
 void setup() {
-  
+  //inisialisasi lcd
   lcd.begin();
-//pertama kali dijalankan ketika program berjalan
-Serial.begin (9600);
+  lcd.backlight();
+  //pertama kali dijalankan ketika program berjalan
+  Serial.begin (9600);
   delay(500); 
   pinMode(trigPinUltra1, OUTPUT);
   pinMode(echoPinUltra1, INPUT);
@@ -49,7 +51,7 @@ Serial.begin (9600);
 //    mp3_set_volume (25);
 //  //Memulai inisialisasi program
   Serial.println("Mulai");
-  printLcd("Mulai ...","");
+  printLcd("Smart Trash","Dev By Indri");
   Serial.println("Selamat datang di Smart Trash. By Indri Gusmita");
   Serial.println(" ============================ ");
   Serial.println("Melakukan koneksi ke wifi : ");
@@ -103,10 +105,140 @@ void cekStatusDevice(){
     delay(2000);
     cekStatusDevice();
   }else{
-    
+    cekDataVolume();
   }
   delay(500);
   http.end();  //Close connection
+}
+
+void cekDataVolume(){
+  digitalWrite(trigPinUltra2, LOW);
+  delayMicroseconds(2);
+  // Sets the trigPin on HIGH state for 10 micro seconds
+  digitalWrite(trigPinUltra2, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPinUltra2, LOW);
+  // Reads the echoPin, returns the sound wave travel time in microseconds
+  durasiUltra2 = pulseIn(echoPinUltra2, HIGH);
+  // Nilai pusat
+  jarakUltra2 = (durasiUltra2  / 2) / 29.1;
+  int jarakFin = jarakUltra2 - 5 + 7;
+  if(jarakUltra2 >= 30){
+    jarakUltra2 = 30;
+  }else{
+    
+  }
+  int finvVol = 0;
+  switch(jarakUltra2){
+    case 30:
+    finvVol = 1;
+    break;
+    case 29:
+    finvVol = 2;
+    break;
+    case 28:
+    finvVol = 3;
+    break;
+    case 27:
+    finvVol = 4;
+    break;
+    case 26:
+    finvVol = 5;
+    break;
+    case 25:
+    finvVol = 6;
+    break;
+    case 24:
+    finvVol = 7;
+    break;
+    case 23:
+    finvVol = 8;
+    break;
+    case 22:
+    finvVol = 9;
+    break;
+    case 21:
+    finvVol = 10;
+    break;
+    case 20:
+    finvVol = 11;
+    break;
+    case 19:
+    finvVol = 12;
+    break;
+    case 18:
+    finvVol = 13;
+    break;
+    case 17:
+    finvVol = 14;
+    break;
+    case 16:
+    finvVol = 15;
+    break;
+    case 15:
+    finvVol = 16;
+    break;
+    case 14:
+    finvVol = 17;
+    break;
+    case 13:
+    finvVol = 18;
+    break;
+    case 12:
+    finvVol = 19;
+    break;
+    case 11:
+    finvVol = 20;
+    break;
+    case 10:
+    finvVol = 21;
+    break;
+    case 9:
+    finvVol = 22;
+    break;
+    case 8:
+    finvVol = 23;
+    break;
+    case 7:
+    finvVol = 24;
+    break;
+    case 6:
+    finvVol = 25;
+    break;
+    case 5:
+    finvVol = 26;
+    break;
+    case 4:
+    finvVol = 27;
+    break;
+    case 3:
+    finvVol = 28;
+    break;
+    case 2:
+    finvVol = 29;
+    break;
+    case 1:
+    finvVol = 30;
+    break;       
+  }
+  
+ finvVol = finvVol - 1;
+  printLcd("Volume sekarang : ", String(finvVol));
+
+  //update data ke server
+  HTTPClient http;
+  String postData;
+  String volCap = String(finvVol);
+  postData = "volume=" + volCap;
+  http.begin("http://indri-project.haxors.or.id/mainApp/sendData.php");
+  http.addHeader("Content-Type", "application/x-www-form-urlencoded");
+  int httpCode = http.POST(postData);   //Send the request
+  String respon = http.getString();    //Get the response payload
+  Serial.println(respon);
+  http.end();  //Close connection
+  delay(200);
+  delay(2500);
+  
 }
 
 void printLcd(String teks, String teks2){
@@ -115,13 +247,14 @@ void printLcd(String teks, String teks2){
   lcd.print(teks);
   lcd.setCursor(0,1);
   lcd.print(teks2);
-  
 }
 
 
   int bil = 0;
 void ultraDepan()
 {
+ printLcd("Stand by","..........");
+ delay(500);
  
 // Clears the trigPin
 digitalWrite(trigPinUltra1, LOW);
@@ -150,6 +283,8 @@ if(jarakUltra1 > 50)
   gerakTutup();
    printLcd("Terima ","kasih..");
    delay(1000);
+   cekDataVolume();
+   delay(500);
    lcd.clear();
 //  mp3_play(5);
 
@@ -280,7 +415,7 @@ void sendVolume(int volum)
   HTTPClient http;
   String postData;
   String volCap = String(volum);
-  postData = "volume="+volCap;
+  postData = "volume=" + volCap;
   http.begin("http://indri-project.haxors.or.id/mainApp/sendData.php");
   http.addHeader("Content-Type", "application/x-www-form-urlencoded");
   int httpCode = http.POST(postData);   //Send the request
