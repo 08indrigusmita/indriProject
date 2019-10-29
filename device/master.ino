@@ -100,18 +100,21 @@ void cekStatusDevice(){
   String respon = http.getString();    //Get the response payload
   Serial.println(respon);
   printLcd("Status device : ",respon);
-  if(respon == "manual" || respon == "silent"){
+  if(respon == "smart"){
+    cekDataVolume();
+  }else{
+    
     printLcd("Menunggu smart","mode");
     delay(2000);
     cekStatusDevice();
-  }else{
-    cekDataVolume();
   }
   delay(500);
   http.end();  //Close connection
 }
 
 void cekDataVolume(){
+  delay(500);
+  
   digitalWrite(trigPinUltra2, LOW);
   delayMicroseconds(2);
   // Sets the trigPin on HIGH state for 10 micro seconds
@@ -121,12 +124,14 @@ void cekDataVolume(){
   // Reads the echoPin, returns the sound wave travel time in microseconds
   durasiUltra2 = pulseIn(echoPinUltra2, HIGH);
   // Nilai pusat
-  jarakUltra2 = (durasiUltra2  / 2) / 29.1;
-  int jarakFin = jarakUltra2 - 5 + 7;
+  jarakUltra2 = (durasiUltra2 / 2) / 29.1;
+  
   if(jarakUltra2 >= 30){
     jarakUltra2 = 30;
   }else{
-    
+    if(jarakUltra2 <= 0){
+      jarakUltra2 = 1;
+    }
   }
   int finvVol = 0;
   switch(jarakUltra2){
@@ -222,7 +227,26 @@ void cekDataVolume(){
     break;       
   }
   
- finvVol = finvVol - 1;
+ finvVol = finvVol - 2 ;
+ if(finvVol >= 25){
+  printLcd("Volume sekarang : ", String(finvVol));
+  delay(2000);
+  printLcd("Tempat sampah","penuh broo..");
+  HTTPClient http;
+  String postData;
+  String volCap = String(finvVol);
+  postData = "status="+String(finvVol);
+  http.begin("http://indri-project.haxors.or.id/mainApp/gantiStatus.php");
+  http.addHeader("Content-Type", "application/x-www-form-urlencoded");
+  int httpCode = http.POST(postData);   //Send the request
+  String respon = http.getString();    //Get the response payload
+  printLcd("Ke mode","manual ...");
+  Serial.println(respon);
+  http.end();
+  delay(1500);
+  cekStatusDevice();
+
+ }else{
   printLcd("Volume sekarang : ", String(finvVol));
 
   //update data ke server
@@ -235,9 +259,10 @@ void cekDataVolume(){
   int httpCode = http.POST(postData);   //Send the request
   String respon = http.getString();    //Get the response payload
   Serial.println(respon);
-  http.end();  //Close connection
-  delay(200);
+  http.end();
   delay(2500);
+ }
+  
   
 }
 
@@ -316,7 +341,7 @@ void cekVolume()
   // Reads the echoPin, returns the sound wave travel time in microseconds
   durasiUltra2 = pulseIn(echoPinUltra2, HIGH);
   // Nilai pusat
-  jarakUltra2 = (durasiUltra2  / 2) / 29.1;
+  jarakUltra2 = (durasiUltra2 * 0.034) / 2;
   int jarakFin = jarakUltra2 - 5 + 7;
   //domain range
   int rangeVolume [] = {30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1};
@@ -334,7 +359,6 @@ void cekVolume()
     penMa = 24;
   //fuzzifikasi
    
-    //derajat keanggotaan 
     //kosong
     for(int kosMi = 0; kosMi <= totRange; kosMi++ ){
      if(kosMi < kosMa && kosMa == kosMi + 6){
@@ -376,7 +400,7 @@ void cekVolume()
   penuhMin = 24;
   penuhMax = 30;
   
-  //Rule fuzzy
+  //Rule based
   const char* status = "";
 
 String statusTempatSampah = "";
